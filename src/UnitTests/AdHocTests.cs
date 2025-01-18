@@ -1,5 +1,6 @@
 ﻿using Common;
 using Common.Dto;
+using Common.Dto.Garmin;
 using Common.Dto.Peloton;
 using Common.Helpers;
 using Common.Http;
@@ -8,6 +9,9 @@ using Conversion;
 using Dynastream.Fit;
 using Flurl;
 using Flurl.Http;
+using Flurl.Http.Configuration;
+using Garmin;
+using Garmin.Auth;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 using Moq;
@@ -19,9 +23,11 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
+using PelotonApiClient = Peloton.ApiClient;
 
 namespace UnitTests
 {
@@ -38,6 +44,15 @@ namespace UnitTests
 					.MinimumLevel.Verbose()
 					//.MinimumLevel.Information()
 					.CreateLogger();
+
+			// Allows using fiddler
+			FlurlHttp.Clients.WithDefaults(cli =>
+			{
+				cli.ConfigureInnerHandler(handler =>
+				{
+					handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+				});
+			});
 		}
 
 		//[Test]
@@ -102,7 +117,7 @@ namespace UnitTests
 		//	var email = "";
 		//	var password = "";
 
-		//	var workoutId = "631fe107823048708d4c9f18a2888c6e";
+		//	var workoutId = "98c617d5c56f4f1ab6fc250afc9aea5f";
 
 		//	var settings = new Settings()
 		//	{
@@ -114,16 +129,26 @@ namespace UnitTests
 		//	};
 
 		//	var autoMocker = new AutoMocker();
-		//	var settingMock = autoMocker.GetMock<ISettingsService>();
-		//	settingMock.Setup(s => s.GetSettingsAsync()).ReturnsAsync(settings);
+		//	var settingsService = autoMocker.GetMock<ISettingsService>();
+		//	settingsService.Setup(s => s.GetSettingsAsync()).ReturnsAsync(settings);
+		//	settingsService.Setup(s => s.GetCustomDeviceInfoAsync(It.IsAny<Workout>())).ReturnsAsync(GarminDevices.EpixDevice);
 
 		//	var fileHandler = autoMocker.GetMock<IFileHandling>();
 
-		//	var client = new ApiClient(settingMock.Object);
-		//	var service = new PelotonService(settingMock.Object, client, fileHandler.Object);
+		//	var client = new PelotonApiClient(settingsService.Object);
+		//	var service = new PelotonService(settingsService.Object, client, fileHandler.Object);
 
 		//	var p2gWorkout = await service.GetWorkoutDetailsAsync(workoutId);
 		//	SaveData(p2gWorkout, workoutId, DataDirectory);
+
+		//	// CONVERT TO FIT & SAVE
+		//	//var fitConverter = new ConverterInstance(settingsService.Object, new IOWrapper());
+		//	//var file = Path.Join(DataDirectory, $"{workoutId}_workout.json");
+		//	//var messages = await fitConverter.Convert(file, settings);
+
+		//	//var output = Path.Join(DataDirectory, "output.fit");
+
+		//	//fitConverter.Save(messages, output);
 		//}
 
 		//[Test]
@@ -191,7 +216,7 @@ namespace UnitTests
 
 			public async Task<ICollection<Mesg>> ConvertForTest(string path, Settings settings)
 			{
-				var workoutData = fileHandler.DeserializeJson<P2GWorkout>(path);
+				var workoutData = fileHandler.DeserializeJsonFile<P2GWorkout>(path);
 				var converted = await this.ConvertInternalAsync(workoutData, settings);
 
 				return converted.Item2;
@@ -199,7 +224,7 @@ namespace UnitTests
 
 			public async Task<Tuple<string, ICollection<Mesg>>> Convert(string path, Settings settings)
 			{
-				var workoutData = fileHandler.DeserializeJson<P2GWorkout>(path);
+				var workoutData = fileHandler.DeserializeJsonFile<P2GWorkout>(path);
 				var converted = await this.ConvertInternalAsync(workoutData, settings);
 
 				return converted;

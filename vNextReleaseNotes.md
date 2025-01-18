@@ -3,17 +3,24 @@
 
 ## Features
 
-- [#502] Partial support for Peloton Gym
-- [#497] Add minimal support for Rowing Bootcamp
-- More exercise mappings
-	- [#495] Open Lateral Raise, Pike Push Up, Dolphin
-	- [#499] Forearm Side Plank Rotation, Straight Leg Bicycle
-	- [#510] Bear Crawl
+- [#698] If using docker, you can now mount the config directory instead of the config file itself. Additionally, the location of the config directory can be overriddien via environment variable: `P2G_CONFIG_DIRECTORY`.
+- [#476] Tread - Sync Total Ascent/Elevation to FIT file.
+- Update Peloton Annual Challenge for 2025 - @milleruk
 
-## Fixes
+## Docker Tags
 
-- `All converters were skipped.` - confusing log message when no workouts needed to be synced
-
-## Housekeeping
-
-- [#509] Various dependency bumps
+- Console
+    - `console-stable`
+    - `console-latest`
+    - `console-v4.4.0`
+    - `console-v4`
+- Api
+    - `api-stable`
+    - `api-latest`
+    - `api-v4.4.0`
+    - `api-v4`
+- WebUI
+    - `webui-stable`
+    - `webui-latest`
+    - `webui-v4.4.0`
+    - `webui-v4`
